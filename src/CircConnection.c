@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <gio/gio.h>
 
+#include <stdio.h>
+
 struct _CircConnection
 {
     CircConnectionStatus    status;
@@ -51,6 +53,7 @@ gpointer circ_connection_recv(gpointer data)
     self->sock_conn = g_socket_client_connect(self->sock_clie, self->sock_addr, NULL, NULL); //try and connect
     if(self->sock_conn == NULL)
     {
+        printf("Error: Failed to connect to %s:%d\n", g_network_address_get_hostname(G_NETWORK_ADDRESS(self->sock_addr)), 6667);
         circ_connection_update_status(self, STATUS_DISCONNECTED);
         return;
     }
@@ -59,6 +62,14 @@ gpointer circ_connection_recv(gpointer data)
     self->doutstream = g_data_output_stream_new( g_io_stream_get_output_stream(G_IO_STREAM(self->sock_conn)) );
     
     out_send_ident(self);
+    
+    gchar* raw_in;
+    gsize nraw_in;
+    while((raw_in = g_data_input_stream_read_line(self->dinstream, &nraw_in, NULL, NULL)) != NULL)
+    {
+        printf("%s\n", raw_in);
+        g_free(raw_in);
+    }
     
 }
 /* Public Functions */
@@ -81,7 +92,7 @@ void circ_connection_connect(CircConnection* self)
 
 void circ_connection_send_raw_message(CircConnection* self, const gchar* raw_message)
 {
-    if(self->status != STATUS_CONNECTED) return;
+//    if(self->status != STATUS_CONNECTED) return;
     g_data_output_stream_put_string(self->doutstream, raw_message, NULL, NULL);
 }
 
