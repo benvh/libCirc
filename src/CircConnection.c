@@ -1,4 +1,5 @@
 #include "CircConnection.h"
+#include "CircConnection_out.h"
 #include <stdlib.h>
 #include <gio/gio.h>
 
@@ -10,6 +11,9 @@ struct _CircConnection
     GSocketConnectable*     sock_addr;
     GSocketClient*          sock_clie;
     GSocketConnection*      sock_conn;
+    
+    GDataInputStream*       dinstream;
+    GDataOutputStream*      doutstream;
     
     GThread*                recv_thread;    
     
@@ -28,7 +32,6 @@ CircConnection* circ_connection_init(CircConnection* self, CircIdentity* identit
     
     self->sock_addr = g_network_address_new(host, port);
     self->sock_clie = g_socket_client_new();
-    self->sock_conn = NULL;
     
     return self;
 }
@@ -42,8 +45,20 @@ void circ_connection_update_status(CircConnection* self, CircConnectionStatus st
 /* Main loop of the connection (this is threaded!!) */
 gpointer circ_connection_recv(gpointer data)
 {
-    CircConnection* self = (CircConnection*)data;
+    CircConnection* self = (CircConnection*)data;    
+    circ_connection_update_status(self, STATUS_CONNECTING);
     
+    self->sock_conn = g_socket_client_connect(self->sock_clie, self->sock_addr, NULL, NULL); //try and connect
+    if(self->sock_conn == NULL)
+    {
+        circ_connection_update_status(self, STATUS_DISCONNECTED);
+        return;
+    }
+    
+    self->dinstream = g_data_input_stream_new( g_io_stream_get_input_stream(G_IO_STREAM(self->sock_conn)) );
+    self->doutstream = g_data_output_stream_new( g_io_stream_get_output_stream(G_IO_STREAM(self->sock_conn)) );
+    
+    out_send_ident(self);
     
 }
 /* Public Functions */
@@ -61,6 +76,17 @@ void circ_connection_destroy(CircConnection* self)
 void circ_connection_connect(CircConnection* self)
 {
     if(self->status != STATUS_DISCONNECTED) return;
-    self->status = STATUS_CONNECTING;
     self->recv_thread = g_thread_create(circ_connection_recv, self, FALSE, NULL);
+}
+
+void circ_connection_send_raw_message(CircConnection* self, const gchar* raw_message)
+{
+    if(self->status != STATUS_CONNECTED) return;
+    g_data_output_stream_put_string(self->doutstream, raw_message, NULL, NULL);
+}
+
+
+CircIdentity* circ_connection_get_identity(CircConnection* self)
+{
+    return self->identity;
 }

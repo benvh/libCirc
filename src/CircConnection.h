@@ -44,6 +44,9 @@ CircConnection*     circ_connection_new(CircIdentity* identity, const gchar* hos
 void                circ_connection_destroy(CircConnection* connection);
 
 void                circ_connection_connect(CircConnection* connection);
+void                circ_connection_send_raw_message(CircConnection* connection, const gchar* raw_message);
+
+CircIdentity*       circ_connection_get_identity(CircConnection* connection);
 
 #endif /* __CIRC_CONNECTION_H__ */
 
