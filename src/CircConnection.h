@@ -31,6 +31,7 @@ typedef enum
 {
     STATUS_DISCONNECTED,
     STATUS_CONNECTING,
+    STATUS_AUTH,
     STATUS_CONNECTED
 }CircConnectionStatus;
 

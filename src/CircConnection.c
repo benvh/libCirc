@@ -58,6 +58,8 @@ gpointer circ_connection_recv(gpointer data)
         return;
     }
     
+    circ_connection_update_status(self, STATUS_AUTH);
+    
     self->dinstream = g_data_input_stream_new( g_io_stream_get_input_stream(G_IO_STREAM(self->sock_conn)) );
     self->doutstream = g_data_output_stream_new( g_io_stream_get_output_stream(G_IO_STREAM(self->sock_conn)) );
     
@@ -92,7 +94,7 @@ void circ_connection_connect(CircConnection* self)
 
 void circ_connection_send_raw_message(CircConnection* self, const gchar* raw_message)
 {
-//    if(self->status != STATUS_CONNECTED) return;
+    if(self->status < STATUS_AUTH) return;
     g_data_output_stream_put_string(self->doutstream, raw_message, NULL, NULL);
 }
 
