@@ -35,12 +35,15 @@ typedef enum
 }CircConnectionStatus;
 
 /* Events */
-typedef void (*circ_event_connected(CircConnection* connection));
-typedef void (*circ_event_disconnected(CircConnection* connection));
+typedef void (*circ_event_connected)(CircConnection* connection);
+typedef void (*circ_event_disconnected)(CircConnection* connection);
+typedef void (*circ_event_connection_status_changed)(CircConnection* connection, CircConnectionStatus status);
 /* ------ */
 
-CircConnection*      circ_connection_new(CircIdentity* identity, const gchar* host, int port);
+CircConnection*     circ_connection_new(CircIdentity* identity, const gchar* host, int port);
+void                circ_connection_destroy(CircConnection* connection);
 
+void                circ_connection_connect(CircConnection* connection);
 
 #endif /* __CIRC_CONNECTION_H__ */
 
