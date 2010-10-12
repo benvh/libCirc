@@ -1,4 +1,8 @@
-#include "CircConnection_out.h"
+#include "CircConnection.h"
+
+void out_send_nick(CircConnection* self);
+void out_pong(CircConnection* self, const gchar* ping);
+
 
 void out_send_ident(CircConnection* self)
 {
@@ -20,4 +24,12 @@ void out_send_nick(CircConnection* self)
     circ_connection_send_raw_message(self, nick_msg);
     
     g_free(nick_msg);
+}
+
+void out_pong(CircConnection* self, const gchar* ping)
+{
+    gchar* ping_msg = g_strdup_printf("PONG %s\n", ping);
+    circ_connection_send_raw_message(self, ping_msg);
+    
+    g_free(ping_msg);
 }

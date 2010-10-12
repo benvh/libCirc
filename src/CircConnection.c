@@ -1,5 +1,5 @@
 #include "CircConnection.h"
-#include "CircConnection_out.h"
+//#include "CircConnection_out.h"
 #include <stdlib.h>
 #include <gio/gio.h>
 
@@ -27,6 +27,8 @@ struct _CircConnection
 
 
 /* Private Functions */
+extern void out_send_ident(CircConnection* self);
+
 CircConnection* circ_connection_init(CircConnection* self, CircIdentity* identity, const gchar* host, int port)
 {
     self->status = STATUS_DISCONNECTED;
@@ -53,15 +55,15 @@ gpointer circ_connection_recv(gpointer data)
     self->sock_conn = g_socket_client_connect(self->sock_clie, self->sock_addr, NULL, NULL); //try and connect
     if(self->sock_conn == NULL)
     {
-        printf("Error: Failed to connect to %s:%d\n", g_network_address_get_hostname(G_NETWORK_ADDRESS(self->sock_addr)), 6667);
+        printf("Error: Failed to connect to %s:%d\n", g_network_address_get_hostname(G_NETWORK_ADDRESS(self->sock_addr)), g_network_address_get_port(G_NETWORK_ADDRESS(self->sock_addr)));
         circ_connection_update_status(self, STATUS_DISCONNECTED);
         return;
     }
     
     circ_connection_update_status(self, STATUS_AUTH);
     
-    self->dinstream = g_data_input_stream_new( g_io_stream_get_input_stream(G_IO_STREAM(self->sock_conn)) );
-    self->doutstream = g_data_output_stream_new( g_io_stream_get_output_stream(G_IO_STREAM(self->sock_conn)) );
+    if(!self->dinstream)self->dinstream = g_data_input_stream_new( g_io_stream_get_input_stream(G_IO_STREAM(self->sock_conn)) );
+    if(!self->doutstream)self->doutstream = g_data_output_stream_new( g_io_stream_get_output_stream(G_IO_STREAM(self->sock_conn)) );
     
     out_send_ident(self);
     
@@ -73,6 +75,8 @@ gpointer circ_connection_recv(gpointer data)
         g_free(raw_in);
     }
     
+    circ_connection_update_status(self, STATUS_DISCONNECTED);
+    //do some cleaning up after disconnect
 }
 /* Public Functions */
 CircConnection* circ_connection_new(CircIdentity* identity, const gchar* host, int port)
