@@ -70,13 +70,13 @@ gpointer circ_connection_recv(gpointer data)
     
     gchar* raw_in;
     gsize nraw_in;
-    while((raw_in = g_data_input_stream_read_line(self->dinstream, &nraw_in, NULL, NULL)) != NULL)
-    {
-        in_parse_message(self, raw_in);
-        g_free(raw_in);
+    while(self->status > STATUS_CONNECTING)
+    {   
+            raw_in = g_data_input_stream_read_line(self->dinstream, &nraw_in, NULL, NULL);
+            in_parse_message(self, raw_in);
+            g_free(raw_in);
     }
-    
-    circ_connection_update_status(self, STATUS_DISCONNECTED);
+    printf("Disconnected\n");
     //do some cleaning up after disconnect
 }
 /* Public Functions */
