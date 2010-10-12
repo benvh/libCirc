@@ -19,10 +19,7 @@ struct _CircConnection
     
     GThread*                recv_thread;    
     
-    /* event callbacks */
-    circ_event_connected                    cb_connected;
-    circ_event_disconnected                 cb_disconnected;
-    circ_event_connection_status_changed    cb_connection_status_changed;
+    GHashTable*             event_callbacks;
 };
 
 
@@ -38,13 +35,20 @@ CircConnection* circ_connection_init(CircConnection* self, CircIdentity* identit
     self->sock_addr = g_network_address_new(host, port);
     self->sock_clie = g_socket_client_new();
     
+    self->dinstream = NULL;
+    self->doutstream = NULL;
+    
+    self->event_callbacks = g_hash_table_new(g_str_hash, g_str_equal);
+    
     return self;
 }
 
 void circ_connection_update_status(CircConnection* self, CircConnectionStatus status)
 {
     self->status = status;
-    if(self->cb_connection_status_changed) self->cb_connection_status_changed(self, status);
+    //if(self->cb_connection_status_changed) self->cb_connection_status_changed(self, status);
+    CircEventCallback callback = g_hash_table_lookup(self->event_callbacks, "connection-status-changed");
+    if(callback)callback(self, status);
 }
 
 /* Main loop of the connection (this is threaded!!) */
@@ -108,4 +112,26 @@ void circ_connection_send_raw_message(CircConnection* self, const gchar* raw_mes
 CircIdentity* circ_connection_get_identity(CircConnection* self)
 {
     return self->identity;
+}
+
+
+void circ_connection_event_connect(CircConnection* self, const gchar* event, CircEventCallback callback)
+{
+    if(!g_hash_table_lookup(self->event_callbacks, event))
+    {
+        g_hash_table_insert(self->event_callbacks, g_strdup(event), callback);
+    }
+    else printf("ERROR: Event '%s' already connected. You need to disconnect the event before reconnecting it!\n", event);
+}
+
+void circ_connection_event_disconnect(CircConnection* self, const gchar* event)
+{
+    CircEventCallback callback;
+    gchar** orig_key;
+    
+    if(g_hash_table_lookup_extended(self->event_callbacks, event, (gpointer*)(&orig_key), (gpointer*)(&callback)) == TRUE)
+    {
+        g_hash_table_remove(self->event_callbacks, event);
+        g_free(orig_key);
+    }
 }

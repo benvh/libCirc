@@ -25,8 +25,10 @@
 typedef struct _CircConnection CircConnection;
 
 #include <glib.h>
+#include <stdarg.h>
 #include "CircIdentity.h"
 
+typedef void (*CircEventCallback)(CircConnection *connection, ... );
 typedef enum
 {
     STATUS_DISCONNECTED,
@@ -34,12 +36,6 @@ typedef enum
     STATUS_AUTH,
     STATUS_CONNECTED
 }CircConnectionStatus;
-
-/* Events */
-typedef void (*circ_event_connected)(CircConnection* connection);
-typedef void (*circ_event_disconnected)(CircConnection* connection);
-typedef void (*circ_event_connection_status_changed)(CircConnection* connection, CircConnectionStatus status);
-/* ------ */
 
 CircConnection*     circ_connection_new(CircIdentity* identity, const gchar* host, int port);
 void                circ_connection_destroy(CircConnection* connection);
@@ -49,5 +45,10 @@ void                circ_connection_send_raw_message(CircConnection* connection,
 
 CircIdentity*       circ_connection_get_identity(CircConnection* connection);
 
+void                circ_connection_event_connect(CircConnection *connection, const gchar* event, CircEventCallback callback);
+void                circ_connection_event_disconnect(CircConnection *connection, const gchar* event);
+
 #endif /* __CIRC_CONNECTION_H__ */
+
+
 
