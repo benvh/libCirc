@@ -27,6 +27,7 @@ struct _CircConnection
 
 
 /* Private Functions */
+extern void in_parse_message(CircConnection* self, const gchar*);
 extern void out_send_ident(CircConnection* self);
 
 CircConnection* circ_connection_init(CircConnection* self, CircIdentity* identity, const gchar* host, int port)
@@ -71,7 +72,7 @@ gpointer circ_connection_recv(gpointer data)
     gsize nraw_in;
     while((raw_in = g_data_input_stream_read_line(self->dinstream, &nraw_in, NULL, NULL)) != NULL)
     {
-        printf("%s\n", raw_in);
+        in_parse_message(self, raw_in);
         g_free(raw_in);
     }
     
@@ -100,6 +101,7 @@ void circ_connection_send_raw_message(CircConnection* self, const gchar* raw_mes
 {
     if(self->status < STATUS_AUTH) return;
     g_data_output_stream_put_string(self->doutstream, raw_message, NULL, NULL);
+    printf("%s", raw_message);
 }
 
 
