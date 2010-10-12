@@ -16,7 +16,7 @@ void in_parse_message(CircConnection* self, const gchar* raw_message)
     
     if(g_strcmp0(raw_split0[0], "PING") == 0)
     {
-        //out_pong(self, raw_split0[1]);
+        out_pong(self, raw_split0[1]);
         g_strfreev(raw_split0);
         return; //we don't need further parsing of the message
     }
