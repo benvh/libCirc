@@ -9,9 +9,9 @@ void conn_connection_status_changed(CircConnection* conn, CircConnectionStatus s
     if(status == STATUS_CONNECTED) gtk_text_buffer_insert_at_cursor(text_buffer, "I R READY TO ROLL!", -1);
 }
 
-void conn_numeric_reply_received(CircConnection* conn, IrcReplyCode num_reply, const gchar* params)
+void conn_numeric_reply_received(CircConnection* conn, IrcReplyCode reply, const gchar* params)
 {
-    gtk_text_buffer_insert_at_cursor(text_buffer, params, -1);
+    if(reply != RPL_ISUPPORT)gtk_text_buffer_insert_at_cursor(text_buffer, params, -1);
 }
 
 int main (int argc, char *argv[])

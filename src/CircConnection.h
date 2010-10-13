@@ -43,6 +43,7 @@ void                    circ_connection_destroy(CircConnection* connection);
 
 void                    circ_connection_connect(CircConnection* connection);
 void                    circ_connection_send_raw_message(CircConnection* connection, const gchar* raw_message);
+void                    circ_connection_send_message(CircConnection* connection, const gchar* to, const gchar* message);
 void                    circ_connection_change_nick(CircConnection* connection, const gchar* nick);
 
 CircIdentity*           circ_connection_get_identity(CircConnection* connection);

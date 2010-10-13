@@ -113,6 +113,13 @@ void circ_connection_send_raw_message(CircConnection* self, const gchar* raw_mes
     printf("%s", raw_message);
 }
 
+void circ_connection_send_message(CircConnection* self, const gchar* to, const gchar* message)
+{
+    gchar* raw_message = g_strdup_printf("PRIVMSG %s %s\n", to, message);
+    circ_connection_send_raw_message(self, raw_message);
+    g_free(raw_message);
+}
+
 void circ_connection_change_nick(CircConnection* self, const gchar* nick)
 {
     circ_identity_set_nick(self->identity, nick);
