@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 extern void circ_connection_update_status(CircConnection*, CircConnectionStatus);
+extern GHashTable* circ_connection_get_callbacks(CircConnection*);
 extern void out_pong(CircConnection*, const gchar*);
 
 void in_numeric_reply(CircConnection* self, int num_reply, const gchar* params);
@@ -40,6 +41,11 @@ void in_parse_message(CircConnection* self, const gchar* raw_message)
 }
 
 void in_numeric_reply(CircConnection* self, int num_reply, const gchar* params)
-{
+{ 
+    if(!params)return;
+    
     if(num_reply == 1) circ_connection_update_status(self, STATUS_CONNECTED);
+    GHashTable* event_callbacks = circ_connection_get_callbacks(self);
+    CircEventCallback callback = g_hash_table_lookup(event_callbacks, "numeric-reply-received");
+    if(callback) callback(self, num_reply, params);
 }
