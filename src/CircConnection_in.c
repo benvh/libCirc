@@ -8,6 +8,8 @@ extern void out_pong(CircConnection*, const gchar*);
 
 void in_numeric_reply(CircConnection* self, int num_reply, const gchar* params);
 
+
+
 void in_parse_message(CircConnection* self, const gchar* raw_message)
 {
     printf("%s\n", raw_message);
@@ -21,8 +23,7 @@ void in_parse_message(CircConnection* self, const gchar* raw_message)
         g_strfreev(raw_split0);
         return; //we don't need further parsing of the message
     }
-    
-    if(g_strcmp0(raw_split0[0], "ERROR") == 0){
+    else if(g_strcmp0(raw_split0[0], "ERROR") == 0){
         //do stuff
         g_strfreev(raw_split0);
         circ_connection_update_status(self, STATUS_DISCONNECTED);
@@ -44,7 +45,15 @@ void in_numeric_reply(CircConnection* self, int num_reply, const gchar* params)
 { 
     if(!params)return;
     
-    if(num_reply == 1) circ_connection_update_status(self, STATUS_CONNECTED);
+    if(num_reply == RPL_ENDOFMOTD) circ_connection_update_status(self, STATUS_CONNECTED);
+    if(circ_connection_get_status(self) == STATUS_AUTH && num_reply == ERR_NICKNAMEINUSE)
+    {
+        CircIdentity* ident = circ_connection_get_identity(self);
+        gchar* new_nick = g_strdup_printf("%s_", circ_identity_get_nick(ident));
+        circ_connection_change_nick(self, new_nick);
+        g_free(new_nick);
+    }
+    
     GHashTable* event_callbacks = circ_connection_get_callbacks(self);
     CircEventCallback callback = g_hash_table_lookup(event_callbacks, "numeric-reply-received");
     if(callback) callback(self, num_reply, params);

@@ -50,7 +50,7 @@ void circ_connection_update_status(CircConnection* self, CircConnectionStatus st
     if(callback)callback(self, status);
 }
 
-/* We need this in CircConnection_in ... */
+/* We need this in CircConnection_in and CircConnection_out ... */
 GHashTable* circ_connection_get_callbacks(CircConnection* self)
 {
     return self->event_callbacks;
@@ -113,12 +113,21 @@ void circ_connection_send_raw_message(CircConnection* self, const gchar* raw_mes
     printf("%s", raw_message);
 }
 
+void circ_connection_change_nick(CircConnection* self, const gchar* nick)
+{
+    circ_identity_set_nick(self->identity, nick);
+    out_send_nick(self);
+}
 
 CircIdentity* circ_connection_get_identity(CircConnection* self)
 {
     return self->identity;
 }
 
+CircConnectionStatus circ_connection_get_status(CircConnection* self)
+{
+    return self->status;
+}
 
 void circ_connection_event_connect(CircConnection* self, const gchar* event, CircEventCallback callback)
 {

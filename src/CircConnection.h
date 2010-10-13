@@ -26,6 +26,7 @@ typedef struct _CircConnection CircConnection;
 
 #include <glib.h>
 #include <stdarg.h>
+#include "irc.h"
 #include "CircIdentity.h"
 
 typedef void (*CircEventCallback)(CircConnection *connection, ... );
@@ -37,16 +38,18 @@ typedef enum
     STATUS_CONNECTED
 }CircConnectionStatus;
 
-CircConnection*     circ_connection_new(CircIdentity* identity, const gchar* host, int port);
-void                circ_connection_destroy(CircConnection* connection);
+CircConnection*         circ_connection_new(CircIdentity* identity, const gchar* host, int port);
+void                    circ_connection_destroy(CircConnection* connection);
 
-void                circ_connection_connect(CircConnection* connection);
-void                circ_connection_send_raw_message(CircConnection* connection, const gchar* raw_message);
+void                    circ_connection_connect(CircConnection* connection);
+void                    circ_connection_send_raw_message(CircConnection* connection, const gchar* raw_message);
+void                    circ_connection_change_nick(CircConnection* connection, const gchar* nick);
 
-CircIdentity*       circ_connection_get_identity(CircConnection* connection);
+CircIdentity*           circ_connection_get_identity(CircConnection* connection);
+CircConnectionStatus    circ_connection_get_status(CircConnection* connection);
 
-void                circ_connection_event_connect(CircConnection *connection, const gchar* event, CircEventCallback callback);
-void                circ_connection_event_disconnect(CircConnection *connection, const gchar* event);
+void                    circ_connection_event_connect(CircConnection *connection, const gchar* event, CircEventCallback callback);
+void                    circ_connection_event_disconnect(CircConnection *connection, const gchar* event);
 
 #endif /* __CIRC_CONNECTION_H__ */
 
