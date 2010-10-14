@@ -7,6 +7,7 @@ extern GHashTable* circ_connection_get_callbacks(CircConnection*);
 extern void out_pong(CircConnection*, const gchar*);
 
 void in_numeric_reply(CircConnection* self, int num_reply, const gchar* params);
+void in_message(CircConnection* self, const gchar* from, const gchar* channel, const gchar* text);
 
 
 
@@ -36,6 +37,13 @@ void in_parse_message(CircConnection* self, const gchar* raw_message)
     if(num_reply != 0) in_numeric_reply(self, num_reply, raw_split0[1]);
     
     //no num_reply
+    if(g_strcmp0(raw_split1[1], "PRIVMSG") == 0)
+    {
+		gchar** nick_host = g_strsplit(raw_split1[0], "!", 0);
+		in_message(self, nick_host[0]+1, raw_split1[2], raw_split0[1]);
+		
+		g_strfreev(nick_host);
+    }
     
     g_strfreev(raw_split0);
     g_strfreev(raw_split1);
@@ -57,4 +65,11 @@ void in_numeric_reply(CircConnection* self, int num_reply, const gchar* params)
     GHashTable* event_callbacks = circ_connection_get_callbacks(self);
     CircEventCallback callback = g_hash_table_lookup(event_callbacks, "numeric-reply-received");
     if(callback) callback(self, num_reply, params);
+}
+
+void in_message(CircConnection* self, const gchar* from, const gchar* channel, const gchar* text)
+{
+	GHashTable* callbacks = circ_connection_get_callbacks(self);
+	CircEventCallback callback = g_hash_table_lookup(callbacks, "message-received");
+	if(callback)callback(self, from, channel, text);
 }

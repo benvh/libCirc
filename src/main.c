@@ -2,16 +2,36 @@
 #include <gtk/gtk.h>
 #include <stdio.h>
 
+/* THIS PROGRAM IS NOT PART OF LIBCIRC. IT IS FOR DEMONSTRATION PURPOSES ONLY! */
+
 GtkTextBuffer *text_buffer;
 
 void conn_connection_status_changed(CircConnection* conn, CircConnectionStatus status)
 {
-    if(status == STATUS_CONNECTED) gtk_text_buffer_insert_at_cursor(text_buffer, "I R READY TO ROLL!", -1);
+    if(status == STATUS_CONNECTED)
+    {
+    	circ_connection_send_raw_message(conn, "JOIN #opers\n");
+    }
 }
 
 void conn_numeric_reply_received(CircConnection* conn, IrcReplyCode reply, const gchar* params)
 {
-    if(reply != RPL_ISUPPORT)gtk_text_buffer_insert_at_cursor(text_buffer, params, -1);
+	GStaticMutex smutex = G_STATIC_MUTEX_INIT;
+	
+	g_static_mutex_lock(&smutex);
+   	if(reply != RPL_ISUPPORT)gtk_text_buffer_insert_at_cursor(text_buffer, params, -1);
+   	g_static_mutex_unlock(&smutex);
+}
+
+void conn_message_received(CircConnection* conn, const gchar* from, const gchar* channel, const gchar* message)
+{
+	//printf("<%s/%s> %s\n", from, channel, message);
+	gchar* msg = g_strdup_printf("<%s %s> %s", from, channel, message);
+	GStaticMutex smutex = G_STATIC_MUTEX_INIT;
+	g_static_mutex_lock(&smutex);
+	gtk_text_buffer_insert_at_cursor(text_buffer, msg, -1);
+	g_static_mutex_unlock(&smutex);
+	g_free(msg);
 }
 
 int main (int argc, char *argv[])
@@ -32,11 +52,12 @@ int main (int argc, char *argv[])
     
     gtk_container_add(GTK_CONTAINER(window), text_view);    
     
-    CircIdentity* ident = circ_identity_new("Trololo", "Ben");
-    CircConnection* conn = circ_connection_new(ident, "localhost", 6667);
+    CircIdentity* ident = circ_identity_new("Trololo", "libCirc");
+    CircConnection* conn = circ_connection_new(ident, "pantheonserver.com", 6667);
     
     circ_connection_event_connect(conn, "connection-status-changed", (CircEventCallback)conn_connection_status_changed);
     circ_connection_event_connect(conn, "numeric-reply-received", (CircEventCallback)conn_numeric_reply_received);
+    circ_connection_event_connect(conn, "message-received", (CircEventCallback)conn_message_received);
     
     circ_connection_connect(conn);
     
