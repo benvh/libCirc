@@ -78,7 +78,7 @@ void in_message(CircConnection* self, const gchar* from, const gchar* channel, c
 	CircEventCallback callback = g_hash_table_lookup(callbacks, "message-received");
 	if(callback)
 	{
-		gdk_threader_enter();
+		gdk_threads_enter();
 		callback(self, from, channel, text);
 		gdk_threads_leave();
 	}

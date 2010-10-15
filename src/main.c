@@ -1,4 +1,4 @@
-#include "CircConnection.h"
+#include "lib/CircConnection.h"
 #include <gtk/gtk.h>
 #include <stdio.h>
 
