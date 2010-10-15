@@ -4,7 +4,9 @@
 
 /* THIS PROGRAM IS NOT PART OF LIBCIRC. IT IS FOR DEMONSTRATION PURPOSES ONLY! */
 
-GtkTextBuffer *text_buffer;
+CircConnection *conn;
+GtkWidget *window, *scroll_chatview, *txt_chatview, *txt_send;
+GtkTextBuffer *chat_buffer;
 
 void conn_connection_status_changed(CircConnection* conn, CircConnectionStatus status)
 {
@@ -16,53 +18,67 @@ void conn_connection_status_changed(CircConnection* conn, CircConnectionStatus s
 
 void conn_numeric_reply_received(CircConnection* conn, IrcReplyCode reply, const gchar* params)
 {
-	GStaticMutex smutex = G_STATIC_MUTEX_INIT;
-	
-	g_static_mutex_lock(&smutex);
-   	if(reply != RPL_ISUPPORT)gtk_text_buffer_insert_at_cursor(text_buffer, params, -1);
-   	g_static_mutex_unlock(&smutex);
+	if(reply != RPL_ISUPPORT)
+	{
+		gtk_text_buffer_insert_at_cursor(chat_buffer, g_strdup(params), -1);
+	}
 }
 
 void conn_message_received(CircConnection* conn, const gchar* from, const gchar* channel, const gchar* message)
 {
-	//printf("<%s/%s> %s\n", from, channel, message);
 	gchar* msg = g_strdup_printf("<%s %s> %s", from, channel, message);
-	GStaticMutex smutex = G_STATIC_MUTEX_INIT;
-	g_static_mutex_lock(&smutex);
-	gtk_text_buffer_insert_at_cursor(text_buffer, msg, -1);
-	g_static_mutex_unlock(&smutex);
+	gtk_text_buffer_insert_at_cursor(chat_buffer, msg, -1);
+	g_free(msg);
+}
+
+void send_message(GtkWidget *widget, gpointer data)
+{
+	gchar* msg = g_strdup_printf("<me> %s\n", gtk_entry_get_text(GTK_ENTRY(txt_send)));
+	
+	circ_connection_send_message(conn, "#opers", gtk_entry_get_text(GTK_ENTRY(txt_send)));
+	gtk_text_buffer_insert_at_cursor(chat_buffer, msg, -1);
+	gtk_entry_set_text(GTK_ENTRY(txt_send), "");
+	
 	g_free(msg);
 }
 
 int main (int argc, char *argv[])
 {
-    GtkWidget *window;
-    GtkWidget *scrolled_window;
+	//these two are important because libCirc is threaded!!!
+	g_thread_init(NULL);
+	gdk_threads_init();
+	gdk_threads_enter();
+	
+	gtk_init(&argc, &argv);
+	
+	GtkBuilder *builder = gtk_builder_new();
+	gtk_builder_add_from_file(builder, "interface.glade", NULL);
+	
+	window = GTK_WIDGET( gtk_builder_get_object(builder, "main_window") );
+	scroll_chatview = GTK_WIDGET( gtk_builder_get_object(builder, "scroll_chatview") );
+	txt_chatview = GTK_WIDGET( gtk_builder_get_object(builder, "txt_chatview") );
+	txt_send = GTK_WIDGET( gtk_builder_get_object(builder, "txt_send") );
+	
+	g_signal_connect(G_OBJECT(txt_send), "activate", G_CALLBACK(send_message), NULL);
+	
+	chat_buffer = gtk_text_buffer_new(NULL);
+	gtk_text_view_set_buffer(GTK_TEXT_VIEW(txt_chatview), chat_buffer);
+	
+	
     
-    GtkWidget *text_view;
-    
-    gtk_init(&argc, &argv);
-    
-    window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_default_size(GTK_WINDOW(window), 640, 480);
-        
-    text_buffer = gtk_text_buffer_new(NULL);
-    text_view = gtk_text_view_new_with_buffer(text_buffer);
-    gtk_text_view_set_editable(GTK_TEXT_VIEW(text_view), FALSE);
-    
-    gtk_container_add(GTK_CONTAINER(window), text_view);    
-    
-    CircIdentity* ident = circ_identity_new("Trololo", "libCirc");
-    CircConnection* conn = circ_connection_new(ident, "pantheonserver.com", 6667);
+    CircIdentity *ident = circ_identity_new("Trololo", "libCirc");
+    conn = circ_connection_new(ident, "localhost", 6667);
     
     circ_connection_event_connect(conn, "connection-status-changed", (CircEventCallback)conn_connection_status_changed);
     circ_connection_event_connect(conn, "numeric-reply-received", (CircEventCallback)conn_numeric_reply_received);
     circ_connection_event_connect(conn, "message-received", (CircEventCallback)conn_message_received);
     
-    circ_connection_connect(conn);
+	circ_connection_connect(conn);
     
     gtk_widget_show_all(window);
-    gtk_main();   
+   
+	gtk_main();	
+	gdk_threads_leave();
             
     return 0;
 }   
