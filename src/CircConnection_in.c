@@ -64,12 +64,22 @@ void in_numeric_reply(CircConnection* self, int num_reply, const gchar* params)
     
     GHashTable* event_callbacks = circ_connection_get_callbacks(self);
     CircEventCallback callback = g_hash_table_lookup(event_callbacks, "numeric-reply-received");
-    if(callback) callback(self, num_reply, params);
+    if(callback)
+    {
+    	gdk_threads_enter();
+    	callback(self, num_reply, params);
+    	gdk_threads_leave();
+    }
 }
 
 void in_message(CircConnection* self, const gchar* from, const gchar* channel, const gchar* text)
 {
 	GHashTable* callbacks = circ_connection_get_callbacks(self);
 	CircEventCallback callback = g_hash_table_lookup(callbacks, "message-received");
-	if(callback)callback(self, from, channel, text);
+	if(callback)
+	{
+		gdk_threader_enter();
+		callback(self, from, channel, text);
+		gdk_threads_leave();
+	}
 }
