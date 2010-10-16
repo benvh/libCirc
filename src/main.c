@@ -31,6 +31,13 @@ void conn_message_received(CircConnection* conn, const gchar* from, const gchar*
 	g_free(msg);
 }
 
+void conn_notice_received(CircConnection *conn, const gchar *from, const gchar *text)
+{
+	gchar *msg = g_strdup_printf("Notice from %s: %s\n", from, text);
+	gtk_text_buffer_insert_at_cursor(chat_buffer, msg, -1);
+	g_free(msg);
+}
+
 void send_message(GtkWidget *widget, gpointer data)
 {
 	gchar* msg = g_strdup_printf("<me> %s\n", gtk_entry_get_text(GTK_ENTRY(txt_send)));
@@ -72,6 +79,7 @@ int main (int argc, char *argv[])
     circ_connection_event_connect(conn, "connection-status-changed", (CircEventCallback)conn_connection_status_changed);
     circ_connection_event_connect(conn, "numeric-reply-received", (CircEventCallback)conn_numeric_reply_received);
     circ_connection_event_connect(conn, "message-received", (CircEventCallback)conn_message_received);
+    circ_connection_event_connect(conn, "notice-received", (CircEventCallback)conn_notice_received);
     
 	circ_connection_connect(conn);
     
