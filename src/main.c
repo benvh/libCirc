@@ -1,6 +1,7 @@
 #include "lib/CircConnection.h"
 #include <gtk/gtk.h>
 #include <stdio.h>
+#include <string.h>
 
 /* THIS PROGRAM IS NOT PART OF LIBCIRC. IT IS FOR DEMONSTRATION PURPOSES ONLY! */
 
@@ -34,6 +35,20 @@ void conn_message_received(CircConnection* conn, const gchar* from, const gchar*
 void conn_notice_received(CircConnection *conn, const gchar *from, const gchar *text)
 {
 	gchar *msg = g_strdup_printf("Notice from %s: %s\n", from, text);
+	gtk_text_buffer_insert_at_cursor(chat_buffer, msg, -1);
+	g_free(msg);
+}
+
+void conn_user_joined_channel(CircConnection *conn, const gchar *user, const gchar *message)
+{
+	gchar *msg = g_strdup_printf("%s joined %s", user, message);
+	gtk_text_buffer_insert_at_cursor(chat_buffer, msg, -1);
+	g_free(msg);
+}
+
+void conn_user_disconnected(CircConnection *conn, const gchar *user, const gchar *message)
+{
+	gchar *msg = g_strdup_printf("%s has lef irc (%s)\n", user, message);
 	gtk_text_buffer_insert_at_cursor(chat_buffer, msg, -1);
 	g_free(msg);
 }
@@ -80,6 +95,8 @@ int main (int argc, char *argv[])
     circ_connection_event_connect(conn, "numeric-reply-received", (CircEventCallback)conn_numeric_reply_received);
     circ_connection_event_connect(conn, "message-received", (CircEventCallback)conn_message_received);
     circ_connection_event_connect(conn, "notice-received", (CircEventCallback)conn_notice_received);
+    circ_connection_event_connect(conn, "user-joined-channel", (CircEventCallback)conn_user_joined_channel);
+    circ_connection_event_connect(conn, "user-disconnected", (CircEventCallback)conn_user_disconnected);
     
 	circ_connection_connect(conn);
     
