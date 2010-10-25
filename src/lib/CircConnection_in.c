@@ -4,12 +4,12 @@
 #include <stdio.h>
 
 extern void circ_connection_update_status(CircConnection*, CircConnectionStatus);
-extern GHashTable* circ_connection_get_callbacks(CircConnection*);
 extern void out_pong(CircConnection*, const gchar*);
 
 void in_numeric_reply(CircConnection *self, int num_reply, const gchar *params);
 void in_message(CircConnection *self, const gchar *from, const gchar *channel, const gchar *message);
 void in_notice(CircConnection *self, const gchar *from, const gchar *message);
+void in_mode(CircConnection *self, const gchar *from, const gchar *channel, const gchar *flags, const gchar *user);
 
 
 
@@ -42,7 +42,7 @@ void in_parse_message(CircConnection* self, const gchar* raw_message)
     gchar** nick_host = g_strsplit(raw_split1[0], "!", 0);
     if(g_strcmp0(raw_split1[1], "MODE") == 0)
     {
-		in_mode(self, nick_host[0]+1, raw_split1[2], raw_split1[3], raw_split1[4]);
+		in_mode(self, nick_host[0]+1, raw_split1[2], raw_split1[3], g_strv_length(raw_split1) > 4 ? raw_split1[4] : NULL);
     }
     else if(g_strcmp0(raw_split1[1], "PRIVMSG") == 0)
     {
@@ -105,7 +105,15 @@ void in_notice(CircConnection *self, const gchar *from, const gchar *message)
 void in_mode(CircConnection *self, const gchar *from, const gchar *channel, const gchar *flags, const gchar *user)
 {
 	if(user == NULL)
+	{
+		circ_call_user_flags_changed(self, from, "", from, flags); //own flags on connect +iwxt
+	}		
+	else if(g_strcmp0(user, ""))
+	{
 		circ_call_channel_flags_changed(self, from, channel, flags);
+	}
 	else
+	{
 		circ_call_user_flags_changed(self, from, channel, user, flags);
+	}
 }
