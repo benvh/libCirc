@@ -21,7 +21,12 @@ void conn_numeric_reply_received(CircConnection* conn, IrcReplyCode reply, const
 {
 	if(reply != RPL_ISUPPORT)
 	{
-		gtk_text_buffer_insert_at_cursor(chat_buffer, g_strdup(params), -1);
+		if(reply == RPL_NAMEREPLY)
+		{
+			//gchar** names = g_strsplit(params);
+		}
+		else
+			gtk_text_buffer_insert_at_cursor(chat_buffer, g_strdup(params), -1);
 	}
 }
 
@@ -49,6 +54,13 @@ void conn_user_joined_channel(CircConnection *conn, const gchar *user, const gch
 void conn_user_disconnected(CircConnection *conn, const gchar *user, const gchar *message)
 {
 	gchar *msg = g_strdup_printf("%s has lef irc (%s)\n", user, message);
+	gtk_text_buffer_insert_at_cursor(chat_buffer, msg, -1);
+	g_free(msg);
+}
+
+void conn_channel_flags_changed(CircConnection *conn, const gchar *from, const gchar *channel, const gchar *flags)
+{
+	gchar *msg = g_strdup_printf("(%s)%s has set mode: %s\n", channel, from, flags);
 	gtk_text_buffer_insert_at_cursor(chat_buffer, msg, -1);
 	g_free(msg);
 }
@@ -97,6 +109,7 @@ int main (int argc, char *argv[])
     circ_connection_event_connect(conn, "notice-received", (CircEventCallback)conn_notice_received);
     circ_connection_event_connect(conn, "user-joined-channel", (CircEventCallback)conn_user_joined_channel);
     circ_connection_event_connect(conn, "user-disconnected", (CircEventCallback)conn_user_disconnected);
+    circ_connection_event_connect(conn, "channel-flags-changed", (CircEventCallback)conn_channel_flags_changed);
     
 	circ_connection_connect(conn);
     
