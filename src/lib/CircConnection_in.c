@@ -49,6 +49,14 @@ void in_parse_message(CircConnection* self, const gchar* raw_message)
     {
  		in_notice(self, nick_host[0]+1, raw_split0[1]);
     }
+    else if(g_strcmp0(raw_split1[1], "JOIN") == 0)
+    {
+    	circ_call_user_joined_channel(self, nick_host[0]+1, raw_split0[1]);
+    }
+    else if(g_strcmp0(raw_split1[1], "QUIT") == 0)
+    {
+    	circ_call_user_disconnected(self, nick_host[0]+1, raw_split0[1]);
+    }
     
     g_strfreev(nick_host);
     g_strfreev(raw_split0);
@@ -68,7 +76,9 @@ void in_numeric_reply(CircConnection* self, int num_reply, const gchar* params)
         g_free(new_nick);
     }
 
+	gdk_threads_enter();
 	circ_call_numeric_reply_received(self, num_reply, params);
+	gdk_threads_leave();
 }
 
 void in_message(CircConnection* self, const gchar* from, const gchar* channel, const gchar* message)

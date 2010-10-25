@@ -7,6 +7,8 @@ typedef void (*tCircConnectionStatusChanged)(CircConnection*, CircConnectionStat
 typedef void (*tCircNumericReplyReceived)(CircConnection*, IrcReplyCode, const gchar*);
 typedef void (*tCircMessageReceived)(CircConnection*, const gchar*, const gchar*, const gchar*);
 typedef void (*tCircNoticeReceived)(CircConnection*, const gchar*, const gchar*);
+typedef void (*tCircUserJoinedChannel)(CircConnection*, const gchar*, const gchar*);
+typedef void (*tCircUserDisconnected)(CircConnection*, const gchar*, const gchar*);
 
 void circ_call_connection_status_changed(CircConnection *conn, CircConnectionStatus status)
 {
@@ -35,3 +37,18 @@ void circ_call_notice_received(CircConnection *conn, const gchar *from, const gc
 	if(callback)
 		((tCircNoticeReceived)callback)(conn, from, message);
 }
+
+void circ_call_user_joined_channel(CircConnection *conn, const gchar *user, const gchar *channel)
+{
+	void* callback = circ_connection_get_callback(conn, "user-joined-channel");
+	if(callback)
+		((tCircUserJoinedChannel)callback)(conn, user, channel);
+}
+
+void circ_call_user_disconnected(CircConnection *conn, const gchar *user, const gchar *message)
+{
+	void* callback = circ_connection_get_callback(conn, "user-disconnected");
+	if(callback)
+		((tCircUserDisconnected)callback)(conn, user, message);
+}
+

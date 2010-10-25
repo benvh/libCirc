@@ -9,6 +9,8 @@ void circ_call_connection_status_changed(CircConnection *conn, CircConnectionSta
 void circ_call_numeric_reply_received(CircConnection *conn, IrcReplyCode replycode, const gchar *message);
 void circ_call_message_received(CircConnection *conn, const gchar *from, const gchar *channel, const gchar *message);
 void circ_call_notice_received(CircConnection *conn, const gchar *from, const gchar *message);
+void circ_call_user_joined_channel(CircConnection *conn, const gchar *user, const gchar *channel);
+void circ_call_user_disconnected(CircConnection *conn, const gchar *user, const gchar *message);
 
 
 #endif /* __CIRC_EVENT_INTERFACE_H__ */
