@@ -1,4 +1,5 @@
 #include "CircConnection.h"
+#include "CircEventInterface.h"
 #include <stdlib.h>
 #include <gio/gio.h>
 
@@ -46,14 +47,18 @@ void circ_connection_update_status(CircConnection* self, CircConnectionStatus st
 {
     self->status = status;
     
-    CircEventCallback callback = g_hash_table_lookup(self->event_callbacks, "connection-status-changed");
-    if(callback)callback(self, status);
+ 	circ_call_connection_status_changed(self, status);
 }
 
 /* We need this in CircConnection_in and CircConnection_out ... */
 GHashTable* circ_connection_get_callbacks(CircConnection* self)
 {
     return self->event_callbacks;
+}
+
+void* circ_connection_get_callback(CircConnection *self, const gchar *event)
+{
+	return g_hash_table_lookup(self->event_callbacks, event);
 }
 
 /* Main loop of the connection (this is threaded!!) */
@@ -115,7 +120,7 @@ void circ_connection_send_raw_message(CircConnection* self, const gchar* raw_mes
 
 void circ_connection_send_message(CircConnection* self, const gchar* to, const gchar* message)
 {
-    gchar* raw_message = g_strdup_printf("PRIVMSG %s %s\n", to, message);
+    gchar* raw_message = g_strdup_printf("PRIVMSG %s :%s\n", to, message);
     circ_connection_send_raw_message(self, raw_message);
     g_free(raw_message);
 }
