@@ -29,7 +29,7 @@ typedef struct _CircConnection CircConnection;
 #include "irc.h"
 #include "CircIdentity.h"
 
-typedef void (*CircEventCallback)(CircConnection *connection, ... );
+typedef void* CircEventCallback;
 typedef enum
 {
     STATUS_DISCONNECTED,

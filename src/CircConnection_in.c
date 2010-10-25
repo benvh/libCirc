@@ -1,4 +1,5 @@
 #include "CircConnection.h"
+#include "CircEventInterface.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -7,8 +8,8 @@ extern GHashTable* circ_connection_get_callbacks(CircConnection*);
 extern void out_pong(CircConnection*, const gchar*);
 
 void in_numeric_reply(CircConnection *self, int num_reply, const gchar *params);
-void in_message(CircConnection *self, const gchar *from, const gchar *channel, const gchar *text);
-void in_notice(CircConnection *self, const gchar *from, const gchar *text);
+void in_message(CircConnection *self, const gchar *from, const gchar *channel, const gchar *message);
+void in_notice(CircConnection *self, const gchar *from, const gchar *message);
 
 
 
@@ -66,36 +67,18 @@ void in_numeric_reply(CircConnection* self, int num_reply, const gchar* params)
         circ_connection_change_nick(self, new_nick);
         g_free(new_nick);
     }
-    
-    GHashTable* event_callbacks = circ_connection_get_callbacks(self);
-    CircEventCallback callback = g_hash_table_lookup(event_callbacks, "numeric-reply-received");
-    if(callback)
-    {
-    	gdk_threads_enter();
-    	callback(self, num_reply, params);
-    	gdk_threads_leave();
-    }
+
+	circ_call_numeric_reply_received(self, num_reply, params);
 }
 
-void in_message(CircConnection* self, const gchar* from, const gchar* channel, const gchar* text)
+void in_message(CircConnection* self, const gchar* from, const gchar* channel, const gchar* message)
 {
-	GHashTable* callbacks = circ_connection_get_callbacks(self);
-	CircEventCallback callback = g_hash_table_lookup(callbacks, "message-received");
-	if(callback)
-	{
-		gdk_threads_enter();
-		callback(self, from, channel, text);
-		gdk_threads_leave();
-	}
+	//do some extra stuff here
+	circ_call_message_received(self, from, channel, message);
 }
 
-void in_notice(CircConnection *self, const gchar *from, const gchar *text)
+void in_notice(CircConnection *self, const gchar *from, const gchar *message)
 {
-	CircEventCallback callback = g_hash_table_lookup( circ_connection_get_callbacks(self), "notice-received");
-	if(callback)
-	{
-		gdk_threads_enter();
-		callback(self, from, text);
-		gdk_threads_leave();
-	}
+	//do some extra stuff here
+	circ_call_notice_received(self, from, message);
 }
