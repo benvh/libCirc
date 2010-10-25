@@ -40,8 +40,11 @@ void in_parse_message(CircConnection* self, const gchar* raw_message)
     
     //no num_reply
     gchar** nick_host = g_strsplit(raw_split1[0], "!", 0);
-    
-    if(g_strcmp0(raw_split1[1], "PRIVMSG") == 0)
+    if(g_strcmp0(raw_split1[1], "MODE") == 0)
+    {
+		in_mode(self, nick_host[0]+1, raw_split1[2], raw_split1[3], raw_split1[4]);
+    }
+    else if(g_strcmp0(raw_split1[1], "PRIVMSG") == 0)
     {
 		in_message(self, nick_host[0]+1, raw_split1[2], raw_split0[1]);
     }
@@ -52,6 +55,10 @@ void in_parse_message(CircConnection* self, const gchar* raw_message)
     else if(g_strcmp0(raw_split1[1], "JOIN") == 0)
     {
     	circ_call_user_joined_channel(self, nick_host[0]+1, raw_split0[1]);
+    }
+    else if(g_strcmp0(raw_split1[1], "PART") == 0)
+    {
+    	circ_call_user_parted_channel(self, nick_host[0]+1, raw_split0[1]);
     }
     else if(g_strcmp0(raw_split1[1], "QUIT") == 0)
     {
@@ -83,12 +90,22 @@ void in_numeric_reply(CircConnection* self, int num_reply, const gchar* params)
 
 void in_message(CircConnection* self, const gchar* from, const gchar* channel, const gchar* message)
 {
-	//do some extra stuff here
+	//do some extra stuff here?
+	gdk_threads_enter();
 	circ_call_message_received(self, from, channel, message);
+	gdk_threads_leave();
 }
 
 void in_notice(CircConnection *self, const gchar *from, const gchar *message)
 {
-	//do some extra stuff here
+	//do some extra stuff here?
 	circ_call_notice_received(self, from, message);
+}
+
+void in_mode(CircConnection *self, const gchar *from, const gchar *channel, const gchar *flags, const gchar *user)
+{
+	if(user == NULL)
+		circ_call_channel_flags_changed(self, from, channel, flags);
+	else
+		circ_call_user_flags_changed(self, from, channel, user, flags);
 }
